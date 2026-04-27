@@ -1136,7 +1136,7 @@ export default function App() {
                               )}
                               <div className={`w-64 h-64 lg:w-80 lg:h-80 ${emp.foto ? '' : 'bg-white/20 backdrop-blur-md shadow-2xl'} rounded-full flex items-center justify-center font-black text-8xl lg:text-9xl border-8 border-white/40 overflow-hidden transition-all group-hover/item:scale-105 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)] ring-4 ring-white/10 shrink-0`}>
                                 {emp.foto ? (
-                                  <img src={emp.foto} alt={emp.nombre} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                  <img src={emp.foto} alt={emp.nombre} className="w-full h-full object-cover object-top" referrerPolicy="no-referrer" />
                                 ) : (
                                   emp.nombre.charAt(0)
                                 )}
@@ -1184,7 +1184,7 @@ export default function App() {
                         <div className="flex items-center gap-6 min-w-0">
                           <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl text-white shadow-xl transition-transform group-hover:scale-110 overflow-hidden border-2 border-white/20`} style={{ backgroundColor: monthColors[emp.mes] }}>
                             {emp.foto ? (
-                              <img src={emp.foto} alt={emp.nombre} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                              <img src={emp.foto} alt={emp.nombre} className="w-full h-full object-cover object-top" referrerPolicy="no-referrer" />
                             ) : (
                               emp.nombre.charAt(0)
                             )}
@@ -1405,7 +1405,7 @@ export default function App() {
                               style={{ backgroundColor: celebrating ? '#FFD700' : themeColor }}
                             >
                               {emp.foto ? (
-                                <img src={emp.foto} alt={emp.nombre} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                <img src={emp.foto} alt={emp.nombre} className="w-full h-full object-cover object-top" referrerPolicy="no-referrer" />
                               ) : (
                                 emp.nombre.charAt(0)
                               )}
