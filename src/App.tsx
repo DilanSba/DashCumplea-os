@@ -654,11 +654,15 @@ export default function App() {
     if (savedEmployees) {
       try {
         const parsed = JSON.parse(savedEmployees);
-        // Patch for Laura Natalie Gomez photo - ensure she has the requested photo
+        // Patch fotos - garantiza que siempre se muestren aunque el cache sea antiguo
         const lauraPhoto = 'https://i.postimg.cc/x1PJj62t/Image-(1).jpg';
+        const santiagoPhoto = '/talentos/santiago-felipe-riveros.jpg';
         const patched = parsed.map((emp: Employee) => {
           if (emp.nombre.toLowerCase().includes('laura natalie gomez')) {
             return { ...emp, foto: lauraPhoto };
+          }
+          if (emp.nombre.toLowerCase().includes('santiago felipe riveros')) {
+            return { ...emp, foto: santiagoPhoto };
           }
           return emp;
         });
