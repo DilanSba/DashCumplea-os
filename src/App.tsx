@@ -151,6 +151,9 @@ const parseEmployees = (csv: string): Employee[] => {
     if (nombre.toLowerCase().includes('laura natalie gomez')) {
       foto = 'https://i.postimg.cc/x1PJj62t/Image-(1).jpg';
     }
+    if (nombre.toLowerCase().includes('santiago felipe riveros')) {
+      foto = '/talentos/santiago-felipe-riveros.jpg';
+    }
 
     return {
       id: `emp-${index}`,
