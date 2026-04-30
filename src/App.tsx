@@ -154,6 +154,9 @@ const parseEmployees = (csv: string): Employee[] => {
     if (nombre.toLowerCase().includes('santiago felipe riveros')) {
       foto = '/talentos/santiago-felipe-riveros.jpg';
     }
+    if (nombre.toLowerCase().includes('diana carolina velasquez')) {
+      foto = '/talentos/diana-carolina-velasquez.png';
+    }
 
     return {
       id: `emp-${index}`,
@@ -657,12 +660,16 @@ export default function App() {
         // Patch fotos - garantiza que siempre se muestren aunque el cache sea antiguo
         const lauraPhoto = 'https://i.postimg.cc/x1PJj62t/Image-(1).jpg';
         const santiagoPhoto = '/talentos/santiago-felipe-riveros.jpg';
+        const dianaPhoto = '/talentos/diana-carolina-velasquez.png';
         const patched = parsed.map((emp: Employee) => {
           if (emp.nombre.toLowerCase().includes('laura natalie gomez')) {
             return { ...emp, foto: lauraPhoto };
           }
           if (emp.nombre.toLowerCase().includes('santiago felipe riveros')) {
             return { ...emp, foto: santiagoPhoto };
+          }
+          if (emp.nombre.toLowerCase().includes('diana carolina velasquez')) {
+            return { ...emp, foto: dianaPhoto };
           }
           return emp;
         });
@@ -1136,7 +1143,7 @@ export default function App() {
                               )}
                               <div className={`w-64 h-64 lg:w-80 lg:h-80 ${emp.foto ? '' : 'bg-white/20 backdrop-blur-md shadow-2xl'} rounded-full flex items-center justify-center font-black text-8xl lg:text-9xl border-8 border-white/40 overflow-hidden transition-all group-hover/item:scale-105 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)] ring-4 ring-white/10 shrink-0`}>
                                 {emp.foto ? (
-                                  <img src={emp.foto} alt={emp.nombre} className="w-full h-full object-cover object-top" referrerPolicy="no-referrer" />
+                                  <img src={emp.foto} alt={emp.nombre} className="w-full h-full object-contain" referrerPolicy="no-referrer" />
                                 ) : (
                                   emp.nombre.charAt(0)
                                 )}
