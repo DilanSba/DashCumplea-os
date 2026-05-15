@@ -1103,102 +1103,145 @@ export default function App() {
               {/* Highlights Section (Today & Upcoming) */}
               <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                 {/* Today's Card */}
-                <motion.div 
+                <motion.div
                   whileHover={{ y: -4 }}
-                  className="lg:col-span-2 text-white p-6 lg:p-10 rounded-[40px] shadow-2xl relative overflow-hidden group cursor-default h-full flex flex-col justify-center min-h-[420px]"
-                  style={{ 
-                    background: `linear-gradient(135deg, ${themeColor}, ${themeColor}dd, ${themeColor}aa)`,
+                  className="lg:col-span-2 text-white rounded-[40px] shadow-2xl relative overflow-hidden group cursor-default h-full min-h-[420px]"
+                  style={{
+                    background: todayBirthdays.length >= 2 ? '#1a0a3a' : '#5b21b6',
                     boxShadow: `0 20px 40px -12px ${themeColor}4d`
                   }}
                 >
-                  <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full -mr-40 -mt-40 blur-3xl transition-transform group-hover:scale-150 duration-700" />
-                  <div className="relative z-10 w-full flex flex-col h-full">
-                    <div className="flex justify-between items-start mb-6 lg:mb-2 text-left">
-                      <div>
-                        <h3 className="text-[10px] uppercase tracking-[0.5em] font-black opacity-80 mb-1">HOY</h3>
-                        <div className="flex items-baseline gap-2">
-                          <p className="text-5xl lg:text-6xl font-black leading-none">{today.getDate()}</p>
-                          <p className="text-xl font-bold opacity-90">{MONTHS_ES[today.getMonth()]}</p>
-                        </div>
-                      </div>
-                      <div className="p-3 bg-white/10 rounded-2xl backdrop-blur-md hidden sm:block">
-                        <Cake className="w-8 h-8 text-white/40" />
-                      </div>
-                    </div>
-                    
-                    <div className="w-full flex-1 flex items-center overflow-hidden">
-                      {todayBirthdays.length === 0 ? (
+                  {/* Full-bleed background image for 2+ birthdays */}
+                  {todayBirthdays.length >= 2 && (
+                    <img
+                      src="https://i.postimg.cc/htQPpZtj/Celebrating-birthday-in-the-office.png"
+                      alt=""
+                      aria-hidden="true"
+                      className="absolute inset-0 w-full h-full object-cover"
+                      style={{ objectPosition: 'center top' }}
+                      referrerPolicy="no-referrer"
+                    />
+                  )}
+
+                  {/* Gradient overlay for legibility */}
+                  <div
+                    className="absolute inset-0 z-[1]"
+                    style={{ background: 'linear-gradient(to top, rgba(30,10,60,0.92) 0%, rgba(30,10,60,0.45) 40%, rgba(0,0,0,0) 70%)' }}
+                  />
+
+                  {/* Content */}
+                  <div className="relative z-[2] flex flex-col h-full min-h-[420px]">
+                    {todayBirthdays.length === 0 ? (
+                      <div className="flex-1 flex items-center justify-center p-8">
                         <div className="w-full py-12 text-center bg-white/5 rounded-[32px] border border-white/10 backdrop-blur-sm">
                           <p className="text-sm opacity-60 italic font-bold mb-2">¡Día tranquilo!</p>
                           <p className="text-xs opacity-40">No hay cumpleaños programados para hoy ni mañana.</p>
                         </div>
-                      ) : todayBirthdays.length === 1 ? (
-                        (() => {
-                          const emp = todayBirthdays[0];
-                          const isActuallyToday = emp.dia === today.getDate();
-                          return (
-                            <div
-                              onClick={(e) => { e.stopPropagation(); setSelectedEmployee(emp); }}
-                              className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-14 cursor-pointer group/item transition-all relative w-full"
-                            >
-                              {!isActuallyToday && (
-                                <div className="absolute -top-4 right-0 lg:top-[-4.5rem] bg-yellow-400 text-black text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-xl z-20 border-2 border-white/20 scale-110">
-                                  Mañana
-                                </div>
-                              )}
-                              <div className={`w-64 h-64 lg:w-80 lg:h-80 ${emp.foto ? '' : 'bg-white/20 backdrop-blur-md shadow-2xl'} rounded-full flex items-center justify-center font-black text-8xl lg:text-9xl border-8 border-white/40 overflow-hidden transition-all group-hover/item:scale-105 shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)] ring-4 ring-white/10 shrink-0`}>
-                                {emp.foto ? (
-                                  <img src={emp.foto} alt={emp.nombre} className="w-full h-full object-contain" style={{ transform: 'scale(1.34)', transformOrigin: 'center center' }} referrerPolicy="no-referrer" />
-                                ) : (
-                                  emp.nombre.charAt(0)
-                                )}
-                              </div>
-                              <div className="text-center lg:text-left space-y-4 max-w-md">
-                                <p title={emp.nombre} className="font-black text-4xl lg:text-6xl leading-tight text-white drop-shadow-[0_8px_16px_rgba(0,0,0,0.4)] tracking-tighter">{emp.nombre.split(' ')[0]}</p>
-                                <div className="flex flex-col gap-2">
-                                  <div className="inline-flex items-center gap-2 px-4 py-2 bg-black/20 rounded-xl backdrop-blur-md w-fit mx-auto lg:mx-0">
-                                    <MapPin className="w-4 h-4 text-white/60" />
-                                    <p className="text-xs lg:text-sm opacity-100 font-black uppercase tracking-[0.2em] text-white overflow-hidden text-ellipsis whitespace-nowrap">{emp.area}</p>
-                                  </div>
-                                  <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-60 ml-1 hidden lg:block">TALENTO WINDMAR HOME</p>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })()
-                      ) : (
-                        <div className="flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-10 w-full">
-                          <div className="w-56 h-56 lg:w-64 lg:h-64 rounded-full flex items-center justify-center border-8 border-white/40 overflow-hidden shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)] ring-4 ring-white/10 shrink-0">
-                            <img
-                              src="https://i.postimg.cc/htQPpZtj/Celebrating-birthday-in-the-office.png"
-                              alt="Celebración"
-                              className="w-full h-full object-cover"
-                              referrerPolicy="no-referrer"
-                            />
-                          </div>
-                          <div className="flex flex-col gap-3 overflow-y-auto max-h-60 w-full max-w-xs lg:max-w-sm pr-1">
-                            {todayBirthdays.map(emp => {
+                      </div>
+                    ) : (
+                      <>
+                        {/* Oval — upper area */}
+                        <div className="flex-1 flex items-center justify-center pt-8 pb-28">
+                          {todayBirthdays.length === 1 ? (
+                            (() => {
+                              const emp = todayBirthdays[0];
                               const isActuallyToday = emp.dia === today.getDate();
                               return (
                                 <div
-                                  key={emp.id}
+                                  className="relative cursor-pointer"
                                   onClick={(e) => { e.stopPropagation(); setSelectedEmployee(emp); }}
-                                  className="flex items-center gap-3 cursor-pointer hover:bg-white/10 p-2 rounded-xl transition-all"
                                 >
                                   {!isActuallyToday && (
-                                    <span className="text-[10px] font-black bg-yellow-400 text-black px-2 py-0.5 rounded-full uppercase tracking-widest shrink-0">Mañana</span>
+                                    <span className="absolute -top-5 left-1/2 -translate-x-1/2 z-10 bg-yellow-400 text-black text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg whitespace-nowrap">
+                                      Mañana
+                                    </span>
                                   )}
-                                  <div>
-                                    <p title={emp.nombre} className="font-black text-2xl lg:text-3xl text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.4)] tracking-tighter leading-tight">{emp.nombre.split(' ')[0]}</p>
-                                    <p className="text-xs opacity-60 font-black uppercase tracking-[0.2em]">{emp.area}</p>
+                                  <div
+                                    className="rounded-full overflow-hidden transition-transform hover:scale-105"
+                                    style={{
+                                      width: 'clamp(180px, 66%, 300px)',
+                                      aspectRatio: '1 / 1',
+                                      border: '3px solid rgba(255,255,255,0.22)',
+                                      boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+                                      background: emp.foto ? 'transparent' : 'rgba(255,255,255,0.15)'
+                                    }}
+                                  >
+                                    {emp.foto ? (
+                                      <img
+                                        src={emp.foto}
+                                        alt={emp.nombre}
+                                        className="w-full h-full object-cover"
+                                        style={{ objectPosition: 'center top' }}
+                                        referrerPolicy="no-referrer"
+                                      />
+                                    ) : (
+                                      <div className="w-full h-full flex items-center justify-center text-white font-black" style={{ fontSize: 72 }}>
+                                        {emp.nombre.charAt(0)}
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               );
-                            })}
-                          </div>
+                            })()
+                          ) : (
+                            <div
+                              className="rounded-full overflow-hidden"
+                              style={{
+                                width: 'clamp(160px, 66%, 280px)',
+                                aspectRatio: '1 / 1',
+                                border: '3px solid rgba(255,255,255,0.22)',
+                                boxShadow: '0 20px 60px rgba(0,0,0,0.5)'
+                              }}
+                            >
+                              <img
+                                src="https://i.postimg.cc/htQPpZtj/Celebrating-birthday-in-the-office.png"
+                                alt="Celebración"
+                                className="w-full h-full object-cover"
+                                referrerPolicy="no-referrer"
+                              />
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
+
+                        {/* Bottom names overlay */}
+                        <div className="absolute bottom-0 left-0 right-0 px-5 py-4">
+                          <p className="font-black uppercase mb-2" style={{ fontSize: 11, letterSpacing: 1, color: 'rgba(255,255,255,0.5)' }}>
+                            HOY · {today.getDate()} {MONTHS_ES[today.getMonth()].toUpperCase()}
+                          </p>
+                          {todayBirthdays.length === 1 ? (
+                            (() => {
+                              const emp = todayBirthdays[0];
+                              return (
+                                <div
+                                  className="cursor-pointer"
+                                  onClick={(e) => { e.stopPropagation(); setSelectedEmployee(emp); }}
+                                >
+                                  <p title={emp.nombre} className="font-black text-white leading-tight" style={{ fontSize: 22 }}>{emp.nombre.split(' ')[0]}</p>
+                                  <p className="font-black uppercase tracking-wider" style={{ fontSize: 11, color: '#c4b5fd' }}>{emp.area}</p>
+                                </div>
+                              );
+                            })()
+                          ) : (
+                            <div className="overflow-y-auto" style={{ maxHeight: 160 }}>
+                              {todayBirthdays.map((emp, idx) => (
+                                <div key={emp.id}>
+                                  <div
+                                    className="cursor-pointer py-2"
+                                    onClick={(e) => { e.stopPropagation(); setSelectedEmployee(emp); }}
+                                  >
+                                    <p title={emp.nombre} className="font-black text-white leading-tight" style={{ fontSize: 18 }}>{emp.nombre.split(' ')[0]}</p>
+                                    <p className="font-black uppercase tracking-wider" style={{ fontSize: 11, color: '#c4b5fd' }}>{emp.area}</p>
+                                  </div>
+                                  {idx < todayBirthdays.length - 1 && (
+                                    <div style={{ height: 1, background: 'rgba(255,255,255,0.25)' }} />
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </div>
                 </motion.div>
 
