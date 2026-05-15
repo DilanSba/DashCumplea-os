@@ -1126,13 +1126,18 @@ export default function App() {
                       </div>
                     </div>
                     
-                    <div className="w-full flex-1 flex items-center">
-                      {todayBirthdays.length > 0 ? (
-                        todayBirthdays.map(emp => {
+                    <div className="w-full flex-1 flex items-center overflow-hidden">
+                      {todayBirthdays.length === 0 ? (
+                        <div className="w-full py-12 text-center bg-white/5 rounded-[32px] border border-white/10 backdrop-blur-sm">
+                          <p className="text-sm opacity-60 italic font-bold mb-2">¡Día tranquilo!</p>
+                          <p className="text-xs opacity-40">No hay cumpleaños programados para hoy ni mañana.</p>
+                        </div>
+                      ) : todayBirthdays.length === 1 ? (
+                        (() => {
+                          const emp = todayBirthdays[0];
                           const isActuallyToday = emp.dia === today.getDate();
                           return (
-                            <div 
-                              key={emp.id}
+                            <div
                               onClick={(e) => { e.stopPropagation(); setSelectedEmployee(emp); }}
                               className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-14 cursor-pointer group/item transition-all relative w-full"
                             >
@@ -1149,7 +1154,7 @@ export default function App() {
                                 )}
                               </div>
                               <div className="text-center lg:text-left space-y-4 max-w-md">
-                                <p className="font-black text-4xl lg:text-6xl leading-tight text-white drop-shadow-[0_8px_16px_rgba(0,0,0,0.4)] tracking-tighter">{formatDisplayName(emp.nombre)}</p>
+                                <p title={emp.nombre} className="font-black text-4xl lg:text-6xl leading-tight text-white drop-shadow-[0_8px_16px_rgba(0,0,0,0.4)] tracking-tighter">{emp.nombre.split(' ')[0]}</p>
                                 <div className="flex flex-col gap-2">
                                   <div className="inline-flex items-center gap-2 px-4 py-2 bg-black/20 rounded-xl backdrop-blur-md w-fit mx-auto lg:mx-0">
                                     <MapPin className="w-4 h-4 text-white/60" />
@@ -1160,11 +1165,37 @@ export default function App() {
                               </div>
                             </div>
                           );
-                        })
+                        })()
                       ) : (
-                        <div className="py-12 text-center bg-white/5 rounded-[32px] border border-white/10 backdrop-blur-sm">
-                          <p className="text-sm opacity-60 italic font-bold mb-2">¡Día tranquilo!</p>
-                          <p className="text-xs opacity-40">No hay cumpleaños programados para hoy ni mañana.</p>
+                        <div className="flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-10 w-full">
+                          <div className="w-56 h-56 lg:w-64 lg:h-64 rounded-full flex items-center justify-center border-8 border-white/40 overflow-hidden shadow-[0_40px_80px_-20px_rgba(0,0,0,0.6)] ring-4 ring-white/10 shrink-0">
+                            <img
+                              src="https://i.postimg.cc/htQPpZtj/Celebrating-birthday-in-the-office.png"
+                              alt="Celebración"
+                              className="w-full h-full object-cover"
+                              referrerPolicy="no-referrer"
+                            />
+                          </div>
+                          <div className="flex flex-col gap-3 overflow-y-auto max-h-60 w-full max-w-xs lg:max-w-sm pr-1">
+                            {todayBirthdays.map(emp => {
+                              const isActuallyToday = emp.dia === today.getDate();
+                              return (
+                                <div
+                                  key={emp.id}
+                                  onClick={(e) => { e.stopPropagation(); setSelectedEmployee(emp); }}
+                                  className="flex items-center gap-3 cursor-pointer hover:bg-white/10 p-2 rounded-xl transition-all"
+                                >
+                                  {!isActuallyToday && (
+                                    <span className="text-[10px] font-black bg-yellow-400 text-black px-2 py-0.5 rounded-full uppercase tracking-widest shrink-0">Mañana</span>
+                                  )}
+                                  <div>
+                                    <p title={emp.nombre} className="font-black text-2xl lg:text-3xl text-white drop-shadow-[0_4px_8px_rgba(0,0,0,0.4)] tracking-tighter leading-tight">{emp.nombre.split(' ')[0]}</p>
+                                    <p className="text-xs opacity-60 font-black uppercase tracking-[0.2em]">{emp.area}</p>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1197,8 +1228,8 @@ export default function App() {
                             )}
                           </div>
                           <div className="min-w-0">
-                            <p className={`text-xl ${isDarkMode ? 'text-slate-100' : 'text-[#1A1A1A]'} font-black transition-colors truncate`}>
-                              {formatDisplayName(emp.nombre)}
+                            <p title={emp.nombre} className={`text-xl ${isDarkMode ? 'text-slate-100' : 'text-[#1A1A1A]'} font-black transition-colors truncate`}>
+                              {emp.nombre.split(' ')[0]}
                             </p>
                             <div className="flex items-center gap-2">
                               <span className="w-2 h-2 rounded-full opacity-40 shrink-0" style={{ backgroundColor: themeColor }} />
