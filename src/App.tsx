@@ -157,6 +157,9 @@ const parseEmployees = (csv: string): Employee[] => {
     if (nombre.toLowerCase().includes('diana carolina velasquez')) {
       foto = '/talentos/diana-carolina-velasquez.png';
     }
+    if (nombre.toLowerCase().includes('andres felipe rengifo')) {
+      foto = 'https://i.postimg.cc/L81t3nbS/Imagen-generada-Motocicleta-deportiva-en-un-paisaje-natural.png';
+    }
 
     return {
       id: `emp-${index}`,
@@ -671,6 +674,9 @@ export default function App() {
           if (emp.nombre.toLowerCase().includes('diana carolina velasquez')) {
             return { ...emp, foto: dianaPhoto };
           }
+          if (emp.nombre.toLowerCase().includes('andres felipe rengifo')) {
+            return { ...emp, foto: 'https://i.postimg.cc/L81t3nbS/Imagen-generada-Motocicleta-deportiva-en-un-paisaje-natural.png' };
+          }
           return emp;
         });
         setEmployees(patched);
@@ -1107,7 +1113,7 @@ export default function App() {
                   whileHover={{ y: -4 }}
                   className="lg:col-span-2 text-white rounded-[40px] shadow-2xl relative overflow-hidden group cursor-default h-full min-h-[420px]"
                   style={{
-                    background: todayBirthdays.length >= 2 ? '#1a0a3a' : '#5b21b6',
+                    background: (todayBirthdays.length >= 2 || (todayBirthdays.length === 1 && todayBirthdays[0].foto)) ? '#1a0a3a' : '#5b21b6',
                     boxShadow: `0 20px 40px -12px ${themeColor}4d`
                   }}
                 >
@@ -1115,6 +1121,17 @@ export default function App() {
                   {todayBirthdays.length >= 2 && (
                     <img
                       src="https://i.postimg.cc/htQPpZtj/Celebrating-birthday-in-the-office.png"
+                      alt=""
+                      aria-hidden="true"
+                      className="absolute inset-0 w-full h-full object-cover"
+                      style={{ objectPosition: 'center top' }}
+                      referrerPolicy="no-referrer"
+                    />
+                  )}
+                  {/* Full-bleed background image for single birthday with photo */}
+                  {todayBirthdays.length === 1 && todayBirthdays[0].foto && (
+                    <img
+                      src={todayBirthdays[0].foto}
                       alt=""
                       aria-hidden="true"
                       className="absolute inset-0 w-full h-full object-cover"
@@ -1145,41 +1162,15 @@ export default function App() {
                           const emp = todayBirthdays[0];
                           const isActuallyToday = emp.dia === today.getDate();
                           return (
-                            <div className="flex-1 flex items-center justify-center pt-8 pb-28">
-                              <div
-                                className="relative cursor-pointer"
-                                onClick={(e) => { e.stopPropagation(); setSelectedEmployee(emp); }}
-                              >
-                                {!isActuallyToday && (
-                                  <span className="absolute -top-5 left-1/2 -translate-x-1/2 z-10 bg-yellow-400 text-black text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg whitespace-nowrap">
-                                    Mañana
-                                  </span>
-                                )}
-                                <div
-                                  className="rounded-full overflow-hidden transition-transform hover:scale-105"
-                                  style={{
-                                    width: 'clamp(180px, 66%, 300px)',
-                                    aspectRatio: '1 / 1',
-                                    border: '3px solid rgba(255,255,255,0.22)',
-                                    boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
-                                    background: emp.foto ? 'transparent' : 'rgba(255,255,255,0.15)'
-                                  }}
-                                >
-                                  {emp.foto ? (
-                                    <img
-                                      src={emp.foto}
-                                      alt={emp.nombre}
-                                      className="w-full h-full object-cover"
-                                      style={{ objectPosition: 'center top' }}
-                                      referrerPolicy="no-referrer"
-                                    />
-                                  ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-white font-black" style={{ fontSize: 72 }}>
-                                      {emp.nombre.charAt(0)}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
+                            <div
+                              className="flex-1 flex items-start pt-6 pl-6 cursor-pointer"
+                              onClick={(e) => { e.stopPropagation(); setSelectedEmployee(emp); }}
+                            >
+                              {!isActuallyToday && (
+                                <span className="bg-yellow-400 text-black text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg whitespace-nowrap">
+                                  Mañana
+                                </span>
+                              )}
                             </div>
                           );
                         })()}
