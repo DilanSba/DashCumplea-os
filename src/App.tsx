@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Search, 
@@ -564,6 +564,37 @@ export default function App() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [celebrationItems, setCelebrationItems] = useState<{ id: number, x: number, y: number, color: string, emoji: string }[]>([]);
   const [isAppReady, setIsAppReady] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const toggleMusic = useCallback(() => {
+    if (!audioRef.current) {
+      audioRef.current = new Audio('/music/tu-cumpleanos-diomedes.mp3');
+      audioRef.current.loop = true;
+      audioRef.current.volume = 0;
+    }
+    const audio = audioRef.current;
+    if (isPlaying) {
+      const fadeOut = setInterval(() => {
+        if (audio.volume > 0.05) { audio.volume = Math.max(0, audio.volume - 0.05); }
+        else { audio.pause(); audio.volume = 0; clearInterval(fadeOut); }
+      }, 60);
+      setIsPlaying(false);
+    } else {
+      audio.play();
+      audio.volume = 0;
+      const fadeIn = setInterval(() => {
+        if (audio.volume < 0.95) { audio.volume = Math.min(1, audio.volume + 0.05); }
+        else { audio.volume = 1; clearInterval(fadeIn); }
+      }, 60);
+      setIsPlaying(true);
+    }
+  }, [isPlaying]);
+
+  useEffect(() => {
+    return () => { audioRef.current?.pause(); };
+  }, []);
+
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('darkMode');
     return saved ? JSON.parse(saved) : false;
@@ -1143,6 +1174,23 @@ export default function App() {
                     className="absolute inset-0 z-[1]"
                     style={{ background: 'linear-gradient(to top, rgba(30,10,60,0.92) 0%, rgba(30,10,60,0.45) 40%, rgba(0,0,0,0) 70%)' }}
                   />
+
+                  {/* Music button — only when there's a birthday today */}
+                  {todayBirthdays.some(e => e.dia === today.getDate()) && (
+                    <button
+                      onClick={toggleMusic}
+                      className="absolute top-5 right-5 z-[3] flex items-center gap-2 px-4 py-2 rounded-full text-white text-xs font-black uppercase tracking-widest transition-all duration-300 backdrop-blur-md"
+                      style={{
+                        background: isPlaying ? 'rgba(112,0,255,0.85)' : 'rgba(255,255,255,0.18)',
+                        border: '1px solid rgba(255,255,255,0.3)',
+                        boxShadow: isPlaying ? '0 0 20px rgba(112,0,255,0.6)' : 'none',
+                      }}
+                      title={isPlaying ? 'Pausar canción' : 'Reproducir canción de cumpleaños'}
+                    >
+                      <span style={{ fontSize: 14 }}>{isPlaying ? '⏸' : '🎵'}</span>
+                      <span>{isPlaying ? 'Pausar' : 'Celebrar'}</span>
+                    </button>
+                  )}
 
                   {/* Content */}
                   <div className="relative z-[2] flex flex-col h-full min-h-[420px]">
