@@ -1175,22 +1175,20 @@ export default function App() {
                     style={{ background: 'linear-gradient(to top, rgba(30,10,60,0.92) 0%, rgba(30,10,60,0.45) 40%, rgba(0,0,0,0) 70%)' }}
                   />
 
-                  {/* Music button — only when there's a birthday today */}
-                  {todayBirthdays.some(e => e.dia === today.getDate()) && (
-                    <button
-                      onClick={toggleMusic}
-                      className="absolute top-5 right-5 z-[3] flex items-center gap-2 px-4 py-2 rounded-full text-white text-xs font-black uppercase tracking-widest transition-all duration-300 backdrop-blur-md"
-                      style={{
-                        background: isPlaying ? 'rgba(112,0,255,0.85)' : 'rgba(255,255,255,0.18)',
-                        border: '1px solid rgba(255,255,255,0.3)',
-                        boxShadow: isPlaying ? '0 0 20px rgba(112,0,255,0.6)' : 'none',
-                      }}
-                      title={isPlaying ? 'Pausar canción' : 'Reproducir canción de cumpleaños'}
-                    >
-                      <span style={{ fontSize: 14 }}>{isPlaying ? '⏸' : '🎵'}</span>
-                      <span>{isPlaying ? 'Pausar' : 'Celebrar'}</span>
-                    </button>
-                  )}
+                  {/* Music button — always visible */}
+                  <button
+                    onClick={toggleMusic}
+                    className="absolute top-5 right-5 z-[3] flex items-center gap-2 px-4 py-2 rounded-full text-white text-xs font-black uppercase tracking-widest transition-all duration-300 backdrop-blur-md"
+                    style={{
+                      background: isPlaying ? 'rgba(112,0,255,0.85)' : 'rgba(255,255,255,0.18)',
+                      border: '1px solid rgba(255,255,255,0.3)',
+                      boxShadow: isPlaying ? '0 0 20px rgba(112,0,255,0.6)' : 'none',
+                    }}
+                    title={isPlaying ? 'Pausar canción' : 'Reproducir canción de cumpleaños'}
+                  >
+                    <span style={{ fontSize: 14 }}>{isPlaying ? '⏸' : '🎵'}</span>
+                    <span>{isPlaying ? 'Pausar' : 'Celebrar'}</span>
+                  </button>
 
                   {/* Content */}
                   <div className="relative z-[2] flex flex-col h-full min-h-[420px]">
