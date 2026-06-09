@@ -1113,22 +1113,20 @@ export default function App() {
                   whileHover={{ y: -4 }}
                   className="lg:col-span-2 text-white rounded-[40px] shadow-2xl relative overflow-hidden group cursor-default h-full min-h-[420px]"
                   style={{
-                    background: (todayBirthdays.length >= 2 || (todayBirthdays.length === 1 && todayBirthdays[0].foto)) ? '#1a0a3a' : '#5b21b6',
+                    background: '#1a0a3a',
                     boxShadow: `0 20px 40px -12px ${themeColor}4d`
                   }}
                 >
-                  {/* Full-bleed background image for 2+ birthdays */}
-                  {todayBirthdays.length >= 2 && (
-                    <img
-                      src="https://i.postimg.cc/htQPpZtj/Celebrating-birthday-in-the-office.png"
-                      alt=""
-                      aria-hidden="true"
-                      className="absolute inset-0 w-full h-full object-cover"
-                      style={{ objectPosition: 'center top' }}
-                      referrerPolicy="no-referrer"
-                    />
-                  )}
-                  {/* Full-bleed background image for single birthday with photo */}
+                  {/* Base background image — always visible */}
+                  <img
+                    src="https://i.postimg.cc/Hkr7ppBd/Chat-GPT-Image-Jun-9-2026-11-00-59-AM.png"
+                    alt=""
+                    aria-hidden="true"
+                    className="absolute inset-0 w-full h-full object-cover"
+                    style={{ objectPosition: 'center top' }}
+                    referrerPolicy="no-referrer"
+                  />
+                  {/* Employee photo overlay for single birthday with photo */}
                   {todayBirthdays.length === 1 && todayBirthdays[0].foto && (
                     <img
                       src={todayBirthdays[0].foto}
