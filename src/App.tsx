@@ -1008,7 +1008,20 @@ export default function App() {
                   </div>
 
                   <div className="flex items-center gap-2 self-end lg:self-center">
-                    <button 
+                    <button
+                      onClick={toggleMusic}
+                      className="p-2.5 rounded-xl border shadow-sm transition-all hover:scale-105 flex items-center gap-1.5 text-xs font-black uppercase tracking-widest"
+                      style={{
+                        backgroundColor: isPlaying ? themeColor : isDarkMode ? '#1E293B' : '#fff',
+                        borderColor: isPlaying ? themeColor : isDarkMode ? '#334155' : '#e2e8f0',
+                        color: isPlaying ? '#fff' : isDarkMode ? '#94a3b8' : '#64748b',
+                        boxShadow: isPlaying ? `0 0 14px ${themeColor}66` : undefined,
+                      }}
+                      title={isPlaying ? 'Pausar canción' : 'Reproducir canción de cumpleaños'}
+                    >
+                      <span style={{ fontSize: 15 }}>{isPlaying ? '⏸' : '🎵'}</span>
+                    </button>
+                    <button
                       onClick={() => setIsEditingTalent('new')}
                       className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm transition-all hover:scale-105 text-slate-500 hover:text-[#7000FF]"
                       style={{ color: themeColor }}
@@ -1175,20 +1188,6 @@ export default function App() {
                     style={{ background: 'linear-gradient(to top, rgba(30,10,60,0.92) 0%, rgba(30,10,60,0.45) 40%, rgba(0,0,0,0) 70%)' }}
                   />
 
-                  {/* Music button — always visible */}
-                  <button
-                    onClick={toggleMusic}
-                    className="absolute top-5 right-5 z-[3] flex items-center gap-2 px-4 py-2 rounded-full text-white text-xs font-black uppercase tracking-widest transition-all duration-300 backdrop-blur-md"
-                    style={{
-                      background: isPlaying ? 'rgba(112,0,255,0.85)' : 'rgba(255,255,255,0.18)',
-                      border: '1px solid rgba(255,255,255,0.3)',
-                      boxShadow: isPlaying ? '0 0 20px rgba(112,0,255,0.6)' : 'none',
-                    }}
-                    title={isPlaying ? 'Pausar canción' : 'Reproducir canción de cumpleaños'}
-                  >
-                    <span style={{ fontSize: 14 }}>{isPlaying ? '⏸' : '🎵'}</span>
-                    <span>{isPlaying ? 'Pausar' : 'Celebrar'}</span>
-                  </button>
 
                   {/* Content */}
                   <div className="relative z-[2] flex flex-col h-full min-h-[420px]">
