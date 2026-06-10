@@ -115,52 +115,115 @@ const CelebrationItem: React.FC<{ x: number, y: number, color: string, emoji: st
   );
 };
 
-// Campo de estrellas vectorial (espacio profundo). Ligero y nítido.
-// Genera posiciones una sola vez; un subconjunto titila vía CSS.
+// Campo de estrellas vectorial (espacio profundo).
+// Tres capas con drift parallax en direcciones y velocidades distintas — efecto de vuelo.
 const Starfield: React.FC = React.memo(() => {
-  const stars = useMemo(() => {
-    const W = 1600, H = 1000;
+  // Capa 1: estrellas lejanas (pequeñas, lentas, mueven poco)
+  const far = useMemo(() => {
     const arr: { cx: number; cy: number; r: number; o: number; tw: boolean; delay: number; dur: number; blue: boolean; glow: boolean }[] = [];
-    for (let i = 0; i < 260; i++) {
-      const big = Math.random() < 0.06;
+    for (let i = 0; i < 180; i++) {
+      const big = Math.random() < 0.04;
       arr.push({
-        cx: Math.random() * W,
-        cy: Math.random() * H,
-        r: big ? Math.random() * 1.3 + 1.3 : Math.random() * 0.8 + 0.35,
-        o: big ? Math.random() * 0.3 + 0.6 : Math.random() * 0.45 + 0.2,
-        tw: Math.random() < 0.3,
-        delay: Math.random() * 6,
-        dur: Math.random() * 3 + 3,
-        blue: Math.random() < 0.16,
-        glow: big && Math.random() < 0.5,
+        cx: Math.random() * 1800,
+        cy: Math.random() * 1200,
+        r: big ? Math.random() * 0.9 + 0.8 : Math.random() * 0.55 + 0.2,
+        o: Math.random() * 0.3 + 0.15,
+        tw: Math.random() < 0.25,
+        delay: Math.random() * 8,
+        dur: Math.random() * 4 + 4,
+        blue: Math.random() < 0.12,
+        glow: false,
       });
     }
     return arr;
   }, []);
 
+  // Capa 2: estrellas medias (brillo medio, velocidad media)
+  const mid = useMemo(() => {
+    const arr: { cx: number; cy: number; r: number; o: number; tw: boolean; delay: number; dur: number; blue: boolean; glow: boolean }[] = [];
+    for (let i = 0; i < 100; i++) {
+      const big = Math.random() < 0.08;
+      arr.push({
+        cx: Math.random() * 1800,
+        cy: Math.random() * 1200,
+        r: big ? Math.random() * 1.2 + 1.0 : Math.random() * 0.7 + 0.35,
+        o: Math.random() * 0.4 + 0.3,
+        tw: Math.random() < 0.35,
+        delay: Math.random() * 6,
+        dur: Math.random() * 3 + 3,
+        blue: Math.random() < 0.18,
+        glow: big && Math.random() < 0.4,
+      });
+    }
+    return arr;
+  }, []);
+
+  // Capa 3: estrellas cercanas (grandes, brillantes, mueven más)
+  const near = useMemo(() => {
+    const arr: { cx: number; cy: number; r: number; o: number; tw: boolean; delay: number; dur: number; blue: boolean; glow: boolean }[] = [];
+    for (let i = 0; i < 40; i++) {
+      arr.push({
+        cx: Math.random() * 1800,
+        cy: Math.random() * 1200,
+        r: Math.random() * 1.4 + 1.2,
+        o: Math.random() * 0.35 + 0.55,
+        tw: Math.random() < 0.5,
+        delay: Math.random() * 5,
+        dur: Math.random() * 3 + 2.5,
+        blue: Math.random() < 0.22,
+        glow: Math.random() < 0.7,
+      });
+    }
+    return arr;
+  }, []);
+
+  const renderLayer = (stars: typeof far) =>
+    stars.map((s, i) => (
+      <circle
+        key={i}
+        cx={s.cx}
+        cy={s.cy}
+        r={s.r}
+        fill={s.blue ? '#bcd4ff' : '#ffffff'}
+        opacity={s.o}
+        className={s.tw ? 'twinkle' : undefined}
+        style={{
+          ...(s.tw ? { animationDelay: `${s.delay}s`, animationDuration: `${s.dur}s` } : {}),
+          filter: s.glow ? 'drop-shadow(0 0 3px rgba(190,212,255,0.9))' : undefined,
+        }}
+      />
+    ));
+
   return (
-    <svg
-      className="pointer-events-none fixed inset-0 z-0 w-full h-full"
-      viewBox="0 0 1600 1000"
-      preserveAspectRatio="xMidYMid slice"
-      aria-hidden="true"
-    >
-      {stars.map((s, i) => (
-        <circle
-          key={i}
-          cx={s.cx}
-          cy={s.cy}
-          r={s.r}
-          fill={s.blue ? '#bcd4ff' : '#ffffff'}
-          opacity={s.o}
-          className={s.tw ? 'twinkle' : undefined}
-          style={{
-            ...(s.tw ? { animationDelay: `${s.delay}s`, animationDuration: `${s.dur}s` } : {}),
-            filter: s.glow ? 'drop-shadow(0 0 3px rgba(190,212,255,0.9))' : undefined,
-          }}
-        />
-      ))}
-    </svg>
+    <>
+      {/* Capa lejana: drift lento diagonal izquierda→derecha */}
+      <svg
+        className="pointer-events-none fixed inset-0 z-0 w-full h-full star-drift-far"
+        viewBox="0 0 1800 1200"
+        preserveAspectRatio="xMidYMid slice"
+        aria-hidden="true"
+      >
+        {renderLayer(far)}
+      </svg>
+      {/* Capa media: drift diagonal opuesto, velocidad media */}
+      <svg
+        className="pointer-events-none fixed inset-0 z-0 w-full h-full star-drift-mid"
+        viewBox="0 0 1800 1200"
+        preserveAspectRatio="xMidYMid slice"
+        aria-hidden="true"
+      >
+        {renderLayer(mid)}
+      </svg>
+      {/* Capa cercana: drift más rápido, mayor desplazamiento */}
+      <svg
+        className="pointer-events-none fixed inset-0 z-0 w-full h-full star-drift-near"
+        viewBox="0 0 1800 1200"
+        preserveAspectRatio="xMidYMid slice"
+        aria-hidden="true"
+      >
+        {renderLayer(near)}
+      </svg>
+    </>
   );
 });
 
@@ -1945,6 +2008,31 @@ export default function App() {
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: #C9A227;
         }
+
+        /* Drift parallax — tres capas de estrellas moviéndose en distintas direcciones */
+        @keyframes driftFar {
+          0%   { transform: translate(0px, 0px); }
+          25%  { transform: translate(18px, 8px); }
+          50%  { transform: translate(24px, 18px); }
+          75%  { transform: translate(10px, 24px); }
+          100% { transform: translate(0px, 0px); }
+        }
+        @keyframes driftMid {
+          0%   { transform: translate(0px, 0px); }
+          25%  { transform: translate(-20px, 10px); }
+          50%  { transform: translate(-30px, -8px); }
+          75%  { transform: translate(-12px, -22px); }
+          100% { transform: translate(0px, 0px); }
+        }
+        @keyframes driftNear {
+          0%   { transform: translate(0px, 0px); }
+          33%  { transform: translate(28px, -16px); }
+          66%  { transform: translate(-14px, -28px); }
+          100% { transform: translate(0px, 0px); }
+        }
+        .star-drift-far  { animation: driftFar  90s ease-in-out infinite; }
+        .star-drift-mid  { animation: driftMid  60s ease-in-out infinite; }
+        .star-drift-near { animation: driftNear 42s ease-in-out infinite; }
       `}</style>
     </>
   );
