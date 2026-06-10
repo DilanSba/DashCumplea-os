@@ -1007,34 +1007,15 @@ export default function App() {
             filter: "blur(10px)",
             transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] }
           }}
-          className="fixed inset-0 z-[200] bg-black flex flex-col items-center justify-center overflow-hidden"
+          className="fixed inset-0 z-[200] flex flex-col items-center justify-center overflow-hidden"
+          style={{ background: 'linear-gradient(160deg, #05060c 0%, #070811 45%, #040409 100%)' }}
         >
-          {/* Animated Background Elements (Balloons) */}
-          <div className="absolute inset-0 overflow-hidden z-10 pointer-events-none">
-            {[...Array(12)].map((_, i) => (
-              <motion.div
-                key={i}
-                initial={{ 
-                  x: Math.random() * 100 + "%", 
-                  y: "110%",
-                  scale: Math.random() * 0.4 + 0.4,
-                  opacity: 0.15
-                }}
-                animate={{ 
-                  y: "-10%",
-                  rotate: Math.random() * 360
-                }}
-                transition={{ 
-                  duration: Math.random() * 5 + 5,
-                  repeat: Infinity,
-                  delay: Math.random() * 2,
-                  ease: "linear"
-                }}
-                className="absolute text-3xl"
-              >
-                🎈
-              </motion.div>
-            ))}
+          {/* Fondo estelar en splash (mismo universo que la app) */}
+          <div className="absolute inset-0 z-0 pointer-events-none">
+            <Starfield />
+            {/* Velo de nebulosa tenue */}
+            <div className="absolute inset-0" style={{ background: `radial-gradient(900px 600px at 60% 20%, rgba(130,150,190,0.09), transparent 60%), radial-gradient(700px 500px at 20% 75%, rgba(150,170,210,0.05), transparent 60%), radial-gradient(800px 600px at 50% -10%, ${themeColor}0d, transparent 55%)` }} />
+            <div className="absolute inset-0" style={{ background: 'radial-gradient(130% 100% at 50% 30%, transparent 50%, rgba(0,0,0,0.6) 100%)' }} />
           </div>
 
           <motion.div
@@ -1043,22 +1024,21 @@ export default function App() {
             transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
             className="relative z-20 flex flex-col items-center"
           >
-            <motion.div 
-              animate={{ 
-                y: [0, -20, 0],
-              }}
+            {/* Logo sin recuadro — directo sobre el universo */}
+            <motion.div
+              animate={{ y: [0, -14, 0] }}
               transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-              className="w-64 h-64 bg-white rounded-[72px] flex items-center justify-center shadow-[0_0_80px_rgba(255,255,255,0.15)] mb-12 overflow-hidden p-8 border border-white/10"
+              className="mb-10"
             >
-              <img 
-                src="https://i.postimg.cc/LsTjqnt3/LOGOS-WMH-PUERTORICO-FLORIDA-white.png" 
-                alt="Windmar Home Logo" 
-                className="w-full h-full object-contain"
+              <img
+                src="https://i.postimg.cc/LsTjqnt3/LOGOS-WMH-PUERTORICO-FLORIDA-white.png"
+                alt="Windmar Home Logo"
+                className="w-56 h-auto object-contain drop-shadow-[0_0_24px_rgba(201,162,39,0.35)]"
                 referrerPolicy="no-referrer"
               />
             </motion.div>
-            
-            <motion.h1 
+
+            <motion.h1
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.5 }}
