@@ -22,13 +22,16 @@ import {
   Download,
   Star,
   Sparkles,
-  Moon,
-  Sun,
   Bell,
   BellOff,
   LayoutGrid,
   List,
-  Plus
+  Plus,
+  Play,
+  // Sun / Moon removidos: tema único oscuro
+  Pause,
+  SkipBack,
+  SkipForward
 } from 'lucide-react';
 
 // --- Types ---
@@ -54,6 +57,25 @@ const MONTHS_ES = [
   'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
 ];
+
+// Playlist de cumpleaños. Para agregar canciones: copia el .mp3 a /public/music/
+// y añade una entrada aquí con el nombre exacto del archivo.
+const MUSIC_PLAYLIST: { title: string; artist: string; file: string }[] = [
+  { title: 'Tu Cumpleaños', artist: 'Diomedes Díaz', file: 'tu-cumpleanos-diomedes.mp3' },
+  { title: 'Feliz Cumpleaños', artist: 'Jhon Alex Castaño', file: 'FELIZ CUMPLEAÑOS  - JHON ALEX CASTAÑO (Video Oficial) (1).mp3' },
+  { title: 'Aventurero', artist: 'Yeison Jiménez', file: 'Aventurero - Yeison Jiménez (Video Oficial).mp3' },
+  { title: 'La Cantina (Remix)', artist: 'Hernán Gómez, Luis Alfonso, Pipe Bueno', file: 'La Cantina (Remix) - Hernan Gómez x Luis Alfonso x Pipe Bueno  Video Oficial.mp3' },
+];
+
+// Mix EXCLUSIVO de un perfil concreto. Solo aparece en el perfil de Jesús Castro.
+const JESUS_SONGS: { title: string; artist: string; file: string }[] = [
+  { title: 'I Love It', artist: 'Kybba, J Balvin & Rytikal', file: 'Jesus Castro - Kybba, J Balvin & Rytikal - I LOVE IT (Official Video).mp3' },
+  { title: 'Ba Ba Bad (Remix)', artist: 'Kybba, Ryan Castro, Sean Paul & Busy Signal', file: 'Jesus Castro - Kybba, Ryan Castro, Sean Paul & Busy Signal - BA BA BAD REMIX (Video Oficial).mp3' },
+  { title: 'Basshall Session #1', artist: 'Kybba ft. Lion Fiah, Alex T.O.K, Bay-C & Fyahbwoy', file: 'Kybba - Basshall Session 1 ft. Lion Fiah, Alex T.O.K, Bay-C & Fyahbwoy.mp3' },
+];
+
+// Nombre normalizado del talento dueño del mix exclusivo.
+const EXCLUSIVE_MIX_OWNER = 'jesus alberto castro sierra';
 
 const DEFAULT_MONTH_COLORS: Record<string, string> = {
   'Enero': '#FF3366',      // Vibrant Pink
@@ -93,6 +115,55 @@ const CelebrationItem: React.FC<{ x: number, y: number, color: string, emoji: st
   );
 };
 
+// Campo de estrellas vectorial (espacio profundo). Ligero y nítido.
+// Genera posiciones una sola vez; un subconjunto titila vía CSS.
+const Starfield: React.FC = React.memo(() => {
+  const stars = useMemo(() => {
+    const W = 1600, H = 1000;
+    const arr: { cx: number; cy: number; r: number; o: number; tw: boolean; delay: number; dur: number; blue: boolean; glow: boolean }[] = [];
+    for (let i = 0; i < 260; i++) {
+      const big = Math.random() < 0.06;
+      arr.push({
+        cx: Math.random() * W,
+        cy: Math.random() * H,
+        r: big ? Math.random() * 1.3 + 1.3 : Math.random() * 0.8 + 0.35,
+        o: big ? Math.random() * 0.3 + 0.6 : Math.random() * 0.45 + 0.2,
+        tw: Math.random() < 0.3,
+        delay: Math.random() * 6,
+        dur: Math.random() * 3 + 3,
+        blue: Math.random() < 0.16,
+        glow: big && Math.random() < 0.5,
+      });
+    }
+    return arr;
+  }, []);
+
+  return (
+    <svg
+      className="pointer-events-none fixed inset-0 z-0 w-full h-full"
+      viewBox="0 0 1600 1000"
+      preserveAspectRatio="xMidYMid slice"
+      aria-hidden="true"
+    >
+      {stars.map((s, i) => (
+        <circle
+          key={i}
+          cx={s.cx}
+          cy={s.cy}
+          r={s.r}
+          fill={s.blue ? '#bcd4ff' : '#ffffff'}
+          opacity={s.o}
+          className={s.tw ? 'twinkle' : undefined}
+          style={{
+            ...(s.tw ? { animationDelay: `${s.delay}s`, animationDuration: `${s.dur}s` } : {}),
+            filter: s.glow ? 'drop-shadow(0 0 3px rgba(190,212,255,0.9))' : undefined,
+          }}
+        />
+      ))}
+    </svg>
+  );
+});
+
 const rawCsv = `ÁREA,NOMBRE,CORREO,MES,DIA,CONTACTO DE EMERGENCIA ,NUMERO ALTERNO,PARIENTE,EXTENSIÓN,TALLAS
 Florida,Diana Carolina Velasquez Rincon,d.velasquez@windmarhome.com,Abril,30,Claudia Rincón,3115828980,Madre,197,S
 Florida,Bryan Smith Jimenez Peña,b.jimenez@windmarhome.com,Diciembre,20,Angie Katherine Garzon,3105837185,Pareja,345,M
@@ -130,6 +201,50 @@ Ventas,Jesus Alberto Castro Sierra,jesus.castro@windmarhome.com,Septiembre,20,Ru
 
 // --- Helpers ---
 
+// Normaliza un nombre: minúsculas, sin acentos, sin signos, espacios colapsados.
+const normalizeName = (s: string) =>
+  (s || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+// Mapeo EXPLÍCITO nombre del CSV -> archivo real en /public/talentos/.
+// La clave es el nombre normalizado (ver normalizeName). Tolera typos y abreviaciones.
+const PHOTO_FILES: Record<string, string> = {
+  'diana carolina velasquez rincon': 'diana-carolina-velasquez.png',
+  'bryan smith jimenez pena': 'BRYAN JIMENEZ.png',
+  'bayron andres diaz figueroa': 'Bayron Andres Diaz Figueroa.png',
+  'karol andrea martinez catellanos': 'Karol Andrea Martinez Castellanos.png',
+  'reinel esteban molina': 'Reinel Esteban Molina Leal.png',
+  'salma valentina burbano barahona': 'Salma Valentina Burbano Barahona.png',
+  'yurubi angelica bonilla castellar': 'Yurubi Angelica Bonilla Castellar.png',
+  'julian mateo cajamarca leon': 'Julian Mateo Cajamarca Leon.png',
+  'andres felipe rengifo sanchez': 'ANDRES RENGIFO.png',
+  'isabella espejo munoz': 'Isabella Espejo Munoz.png',
+  'avelino rubiano vargas': 'Avelino Rubiano Vargas.png',
+  'laura natalie gomez melgarejo': 'Laura Natalie Gomez Melgarejo.png',
+  'santiago felipe riveros salamanca': 'santiago-felipe-riveros.jpg',
+  'ana castellanos': 'Ana Maria Castellanos Martinez.png',
+  'brandon steven dominguez ramos': 'Brandon Steven Dominguez Ramos.png',
+  'dilan steveen buitrago aparicio': 'DILAN BUITRAGO.png',
+  'maria fernanda castano rengifo': 'MARIA FERNANDA.png',
+  'maria paula vargas torres': 'Maria Paula Vargas Torres.png',
+  'angel david ladino quintero': 'Angel David Ladino Quintero.png',
+  'laura valentina guarnizo bahamon': 'Laura Valentina Guarnizo Bahamon.png',
+  'cristian leonardo castro guerrero': 'Cristian Leonardo Castro Guerrero.png',
+  'leslie tatiana pena ortiz': 'Leslie Tatiana Peña Ortiz.png',
+  'juan sebastian rivera joven': 'Juan Sebastian Rivera Joven.png',
+  'jesus alberto castro sierra': 'JESUS CASTRO.png',
+};
+
+// Devuelve la ruta pública (codificada) de la foto de un talento, o undefined.
+const getPhoto = (nombre: string): string | undefined => {
+  const file = PHOTO_FILES[normalizeName(nombre)];
+  return file ? `/talentos/${encodeURIComponent(file)}` : undefined;
+};
+
 const formatDisplayName = (name: string) => {
   const parts = name.trim().split(/\s+/);
   if (parts.length >= 4) return parts.slice(0, 3).join(' ');
@@ -147,19 +262,7 @@ const parseEmployees = (csv: string): Employee[] => {
     const mesNum = MONTHS_ES.indexOf(mes) + 1;
     
     const nombre = values[1]?.trim() || '';
-    let foto;
-    if (nombre.toLowerCase().includes('laura natalie gomez')) {
-      foto = 'https://i.postimg.cc/x1PJj62t/Image-(1).jpg';
-    }
-    if (nombre.toLowerCase().includes('santiago felipe riveros')) {
-      foto = '/talentos/santiago-felipe-riveros.jpg';
-    }
-    if (nombre.toLowerCase().includes('diana carolina velasquez')) {
-      foto = '/talentos/diana-carolina-velasquez.png';
-    }
-    if (nombre.toLowerCase().includes('andres felipe rengifo')) {
-      foto = 'https://i.postimg.cc/L81t3nbS/Imagen-generada-Motocicleta-deportiva-en-un-paisaje-natural.png';
-    }
+    const foto = getPhoto(nombre);
 
     return {
       id: `emp-${index}`,
@@ -196,11 +299,12 @@ const getZodiacSign = (day: number, month: number) => {
 
 // --- Components ---
 
-const Modal = ({ employee, onClose, onEdit, monthColors, isDarkMode }: { employee: Employee | null, onClose: () => void, onEdit: (emp: Employee) => void, monthColors: Record<string, string>, isDarkMode: boolean }) => {
+const Modal = ({ employee, onClose, onEdit, monthColors, isDarkMode, onPlayMix, isMixPlaying }: { employee: Employee | null, onClose: () => void, onEdit: (emp: Employee) => void, monthColors: Record<string, string>, isDarkMode: boolean, onPlayMix?: () => void, isMixPlaying?: boolean }) => {
   if (!employee) return null;
 
   const color = monthColors[employee.mes] || '#1D429B';
   const zodiac = getZodiacSign(employee.dia, employee.mesNum);
+  const hasExclusiveMix = normalizeName(employee.nombre) === EXCLUSIVE_MIX_OWNER;
 
   return (
     <motion.div
@@ -259,6 +363,23 @@ const Modal = ({ employee, onClose, onEdit, monthColors, isDarkMode }: { employe
             <Cake className="w-4 h-4" />
             <span>{employee.dia} de {employee.mes}</span>
           </div>
+
+          {hasExclusiveMix && onPlayMix && (
+            <button
+              onClick={onPlayMix}
+              className="w-full mb-6 flex items-center gap-3 p-3 rounded-2xl transition-all hover:scale-[1.02] active:scale-95 group"
+              style={{ background: 'linear-gradient(100deg, #1A1A1A, #3a2d00)', border: `1px solid ${color}66` }}
+            >
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: color, color: '#111' }}>
+                {isMixPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
+              </div>
+              <div className="text-left flex-1 min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-widest" style={{ color }}>Mix exclusivo</p>
+                <p className="text-sm font-black text-white truncate">{isMixPlaying ? 'Sonando ahora · 3 canciones' : 'Reproducir su playlist'}</p>
+              </div>
+              <span className="text-2xl mr-1">🎧</span>
+            </button>
+          )}
 
           <div className="space-y-4">
             <div className="flex items-start gap-4">
@@ -565,43 +686,90 @@ export default function App() {
   const [celebrationItems, setCelebrationItems] = useState<{ id: number, x: number, y: number, color: string, emoji: string }[]>([]);
   const [isAppReady, setIsAppReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [playlist, setPlaylist] = useState(MUSIC_PLAYLIST);
+  const [currentTrack, setCurrentTrack] = useState(0);
+  const [trackProgress, setTrackProgress] = useState(0); // 0..1
+  const [playerOpen, setPlayerOpen] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const fadeRef = useRef<number | null>(null);
+  // Refs espejo para que los callbacks del <audio> nunca usen estado obsoleto.
+  const playlistRef = useRef(playlist);
+  const trackRef = useRef(0);
+  useEffect(() => { playlistRef.current = playlist; }, [playlist]);
+  useEffect(() => { trackRef.current = currentTrack; }, [currentTrack]);
+
+  const fadeTo = useCallback((target: number, onDone?: () => void) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (fadeRef.current) window.clearInterval(fadeRef.current);
+    fadeRef.current = window.setInterval(() => {
+      const diff = target - audio.volume;
+      if (Math.abs(diff) <= 0.06) {
+        audio.volume = target;
+        if (fadeRef.current) window.clearInterval(fadeRef.current);
+        onDone?.();
+      } else {
+        audio.volume = Math.min(1, Math.max(0, audio.volume + Math.sign(diff) * 0.06));
+      }
+    }, 50);
+  }, []);
+
+  // Reproduce una pista de una lista concreta. Actualiza estado y refs en sincronía.
+  const playFrom = useCallback((list: typeof MUSIC_PLAYLIST, idx: number) => {
+    if (!audioRef.current) { audioRef.current = new Audio(); audioRef.current.volume = 0; }
+    const audio = audioRef.current;
+    playlistRef.current = list;
+    trackRef.current = idx;
+    setPlaylist(list);
+    setCurrentTrack(idx);
+    audio.src = `/music/${list[idx].file}`;
+    audio.currentTime = 0;
+    audio.play().then(() => { audio.volume = 0; fadeTo(0.85); setIsPlaying(true); }).catch(() => {});
+  }, [fadeTo]);
+
+  const pauseMusic = useCallback(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    fadeTo(0, () => audio.pause());
+    setIsPlaying(false);
+  }, [fadeTo]);
 
   const toggleMusic = useCallback(() => {
-    if (!audioRef.current) {
-      audioRef.current = new Audio('/music/tu-cumpleanos-diomedes.mp3');
-      audioRef.current.loop = true;
-      audioRef.current.volume = 0;
-    }
     const audio = audioRef.current;
-    if (isPlaying) {
-      const fadeOut = setInterval(() => {
-        if (audio.volume > 0.05) { audio.volume = Math.max(0, audio.volume - 0.05); }
-        else { audio.pause(); audio.volume = 0; clearInterval(fadeOut); }
-      }, 60);
-      setIsPlaying(false);
-    } else {
-      audio.play();
-      audio.volume = 0;
-      const fadeIn = setInterval(() => {
-        if (audio.volume < 0.95) { audio.volume = Math.min(1, audio.volume + 0.05); }
-        else { audio.volume = 1; clearInterval(fadeIn); }
-      }, 60);
-      setIsPlaying(true);
-    }
-  }, [isPlaying]);
+    if (isPlaying) { pauseMusic(); return; }
+    if (audio && audio.src) { audio.play().then(() => { fadeTo(0.85); setIsPlaying(true); }).catch(() => {}); }
+    else playFrom(playlistRef.current, trackRef.current);
+  }, [isPlaying, pauseMusic, fadeTo, playFrom]);
+
+  const changeTrack = useCallback((dir: 1 | -1) => {
+    const list = playlistRef.current;
+    const next = (trackRef.current + dir + list.length) % list.length;
+    playFrom(list, next);
+  }, [playFrom]);
+
+  // Avanza automáticamente al terminar una canción + barra de progreso.
+  useEffect(() => {
+    if (!audioRef.current) { audioRef.current = new Audio(); audioRef.current.volume = 0; }
+    const audio = audioRef.current;
+    const onEnded = () => changeTrack(1);
+    const onTime = () => setTrackProgress(audio.duration ? audio.currentTime / audio.duration : 0);
+    audio.addEventListener('ended', onEnded);
+    audio.addEventListener('timeupdate', onTime);
+    return () => {
+      audio.removeEventListener('ended', onEnded);
+      audio.removeEventListener('timeupdate', onTime);
+    };
+  }, [changeTrack]);
 
   useEffect(() => {
     return () => { audioRef.current?.pause(); };
   }, []);
 
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const saved = localStorage.getItem('darkMode');
-    return saved ? JSON.parse(saved) : false;
-  });
+  // Tema único oscuro premium ("dark luxe"). Se elimina el modo claro.
+  const isDarkMode = true;
 
   const [themeColor, setThemeColor] = useState(() => {
-    return localStorage.getItem('themeColor') || '#7000FF';
+    return localStorage.getItem('themeColor_v2') || '#C9A227';
   });
 
   const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
@@ -636,7 +804,7 @@ export default function App() {
         if (!localStorage.getItem(lastNotifiedKey)) {
           new Notification("¡Cumpleaños Mañana! 🎂", {
             body: `${emp.nombre} de ${emp.area} cumple años mañana. ¡No olvides felicitarle!`,
-            icon: "https://i.postimg.cc/MvLnbhrR/WINDMAR-HOME-HAPPY-BIRTH.png"
+            icon: "https://i.postimg.cc/LsTjqnt3/LOGOS-WMH-PUERTORICO-FLORIDA-white.png"
           });
           localStorage.setItem(lastNotifiedKey, 'true');
         }
@@ -668,16 +836,11 @@ export default function App() {
   }, [selectedEmployee, monthColors]);
 
   useEffect(() => {
-    localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
+    document.documentElement.classList.add('dark');
+  }, []);
 
   useEffect(() => {
-    localStorage.setItem('themeColor', themeColor);
+    localStorage.setItem('themeColor_v2', themeColor);
     // Update month colors to match theme color for a unified look
     const unifiedColors: Record<string, string> = {};
     MONTHS_ES.forEach(month => {
@@ -691,25 +854,11 @@ export default function App() {
     if (savedEmployees) {
       try {
         const parsed = JSON.parse(savedEmployees);
-        // Patch fotos - garantiza que siempre se muestren aunque el cache sea antiguo
-        const lauraPhoto = 'https://i.postimg.cc/x1PJj62t/Image-(1).jpg';
-        const santiagoPhoto = '/talentos/santiago-felipe-riveros.jpg';
-        const dianaPhoto = '/talentos/diana-carolina-velasquez.png';
-        const patched = parsed.map((emp: Employee) => {
-          if (emp.nombre.toLowerCase().includes('laura natalie gomez')) {
-            return { ...emp, foto: lauraPhoto };
-          }
-          if (emp.nombre.toLowerCase().includes('santiago felipe riveros')) {
-            return { ...emp, foto: santiagoPhoto };
-          }
-          if (emp.nombre.toLowerCase().includes('diana carolina velasquez')) {
-            return { ...emp, foto: dianaPhoto };
-          }
-          if (emp.nombre.toLowerCase().includes('andres felipe rengifo')) {
-            return { ...emp, foto: 'https://i.postimg.cc/L81t3nbS/Imagen-generada-Motocicleta-deportiva-en-un-paisaje-natural.png' };
-          }
-          return emp;
-        });
+        // Siempre recalcula la foto desde el mapeo oficial (tolera cache antiguo).
+        const patched = parsed.map((emp: Employee) => ({
+          ...emp,
+          foto: getPhoto(emp.nombre) ?? emp.foto,
+        }));
         setEmployees(patched);
       } catch (e) {
         console.error('Error loading employees', e);
@@ -902,7 +1051,7 @@ export default function App() {
               className="w-64 h-64 bg-white rounded-[72px] flex items-center justify-center shadow-[0_0_80px_rgba(255,255,255,0.15)] mb-12 overflow-hidden p-8 border border-white/10"
             >
               <img 
-                src="https://i.postimg.cc/MvLnbhrR/WINDMAR-HOME-HAPPY-BIRTH.png" 
+                src="https://i.postimg.cc/LsTjqnt3/LOGOS-WMH-PUERTORICO-FLORIDA-white.png" 
                 alt="Windmar Home Logo" 
                 className="w-full h-full object-contain"
                 referrerPolicy="no-referrer"
@@ -915,7 +1064,7 @@ export default function App() {
               transition={{ delay: 0.5 }}
               className="text-6xl font-black text-white tracking-tighter mb-4 text-center"
             >
-              Windmar <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF3366] to-[#7000FF]">Celebration</span>
+              Windmar <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F0D060] via-[#C9A227] to-[#B8860B]">Celebration</span>
             </motion.h1>
             
             <div className="flex flex-col items-center gap-8">
@@ -950,8 +1099,9 @@ export default function App() {
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className={`flex h-screen ${isDarkMode ? 'bg-[#0F172A] text-white' : 'bg-[#F0F2F5] text-[#1A1A1A]'} font-sans overflow-hidden transition-colors duration-500 relative`}
-          style={{ 
+          className="flex h-screen text-white font-sans overflow-hidden relative"
+          style={{
+            background: '#08080a',
             // @ts-ignore
             '--theme-color': themeColor,
             '--theme-color-20': `${themeColor}33`,
@@ -959,6 +1109,20 @@ export default function App() {
           } as React.CSSProperties}
           onClick={handleGlobalClick}
         >
+          {/* Base de espacio profundo (casi negro, con velo frío de nebulosa) */}
+          <div
+            className="pointer-events-none fixed inset-0 z-0"
+            style={{
+              background: `radial-gradient(1100px 760px at 80% 22%, rgba(130,150,190,0.10), transparent 62%), radial-gradient(900px 680px at 18% 80%, rgba(150,170,210,0.06), transparent 60%), radial-gradient(1000px 700px at 50% -10%, ${themeColor}12, transparent 58%), linear-gradient(160deg, #05060c 0%, #070811 45%, #040409 100%)`,
+            }}
+          />
+          {/* Campo de estrellas */}
+          <Starfield />
+          {/* Viñeta para profundidad y mantener el tema dark */}
+          <div
+            className="pointer-events-none fixed inset-0 z-0"
+            style={{ background: 'radial-gradient(135% 105% at 50% 30%, transparent 50%, rgba(0,0,0,0.65) 100%)' }}
+          />
           {celebrationItems.map(item => (
             <CelebrationItem 
               key={item.id} 
@@ -971,16 +1135,19 @@ export default function App() {
           ))}
 
           {/* Main Content */}
-          <main className={`flex-1 flex flex-col overflow-y-auto overflow-x-hidden ${isDarkMode ? 'bg-[#0F172A]' : 'bg-[#F8FAFC]'} transition-colors duration-500`}>
+          <main className="relative z-10 flex-1 flex flex-col overflow-y-auto overflow-x-hidden bg-transparent">
             {/* Unified Header */}
-            <header className={`sticky top-0 z-40 w-full ${isDarkMode ? 'bg-[#1E293B]/80' : 'bg-white/80'} backdrop-blur-xl border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-200/60'} p-4 md:p-6 transition-colors duration-500`}>
+            <header
+              className="sticky top-0 z-40 w-full p-4 md:p-6"
+              style={{ background: 'linear-gradient(180deg, #05060c 0%, #05060c 76%, #05060c00 100%)' }}
+            >
               <div className="max-w-[1600px] mx-auto flex flex-col gap-6">
                 {/* Top Row: Logo, Search, Actions */}
                 <div className="flex flex-col lg:flex-row justify-between items-center gap-6 lg:gap-12">
                   <div className="flex items-center gap-4 group cursor-pointer shrink-0">
-                    <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg shadow-purple-500/10 transform group-hover:rotate-6 transition-transform overflow-hidden p-1.5 border border-slate-100">
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center transform group-hover:rotate-6 transition-transform overflow-hidden p-1">
                       <img 
-                        src="https://i.postimg.cc/MvLnbhrR/WINDMAR-HOME-HAPPY-BIRTH.png" 
+                        src="https://i.postimg.cc/LsTjqnt3/LOGOS-WMH-PUERTORICO-FLORIDA-white.png" 
                         alt="Windmar Home Logo" 
                         className="w-full h-full object-contain"
                         referrerPolicy="no-referrer"
@@ -1002,36 +1169,120 @@ export default function App() {
                       placeholder="Buscar por nombre, área o cargo..."
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
-                      className={`w-full ${isDarkMode ? 'bg-slate-800 text-white placeholder:text-slate-500 focus:bg-slate-900' : 'bg-[#F8FAFC] text-[#1A1A1A] placeholder:text-[#A7A9AC] focus:bg-white'} border-2 border-transparent rounded-2xl py-3 pl-12 pr-4 text-sm focus:outline-none transition-all font-medium shadow-sm`}
-                      style={{ borderColor: search ? `${themeColor}33` : 'transparent' }}
+                      className="w-full bg-white/5 backdrop-blur-md text-white placeholder:text-slate-500 focus:bg-white/10 border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-sm focus:outline-none transition-all font-medium shadow-sm"
+                      style={{ borderColor: search ? `${themeColor}55` : undefined }}
                     />
                   </div>
 
                   <div className="flex items-center gap-2 self-end lg:self-center">
-                    <button
-                      onClick={toggleMusic}
-                      className="p-2.5 rounded-xl border shadow-sm transition-all hover:scale-105 flex items-center gap-1.5 text-xs font-black uppercase tracking-widest"
-                      style={{
-                        backgroundColor: isPlaying ? themeColor : isDarkMode ? '#1E293B' : '#fff',
-                        borderColor: isPlaying ? themeColor : isDarkMode ? '#334155' : '#e2e8f0',
-                        color: isPlaying ? '#fff' : isDarkMode ? '#94a3b8' : '#64748b',
-                        boxShadow: isPlaying ? `0 0 14px ${themeColor}66` : undefined,
-                      }}
-                      title={isPlaying ? 'Pausar canción' : 'Reproducir canción de cumpleaños'}
-                    >
-                      <span style={{ fontSize: 15 }}>{isPlaying ? '⏸' : '🎵'}</span>
-                    </button>
+                    {/* Reproductor de música desplegable */}
+                    <div className="relative" onClick={(e) => e.stopPropagation()}>
+                      <div
+                        className="flex items-center gap-2 rounded-2xl border shadow-sm pl-2 pr-3 py-1.5 transition-all cursor-pointer select-none"
+                        style={{
+                          backgroundColor: isDarkMode ? '#111' : '#1A1A1A',
+                          borderColor: isPlaying ? themeColor : 'transparent',
+                          boxShadow: isPlaying ? `0 0 16px ${themeColor}55` : undefined,
+                        }}
+                        onClick={() => setPlayerOpen(o => !o)}
+                        onDoubleClick={() => { setPlayerOpen(false); toggleMusic(); }}
+                        title="Clic: ver canciones · Doble clic: reproducir"
+                      >
+                        {/* Disco giratorio */}
+                        <div
+                          className="relative w-9 h-9 rounded-full flex items-center justify-center shrink-0 overflow-hidden"
+                          style={{ background: `radial-gradient(circle at 30% 30%, ${themeColor}, #2a2000)` }}
+                        >
+                          <motion.div
+                            animate={isPlaying ? { rotate: 360 } : { rotate: 0 }}
+                            transition={isPlaying ? { duration: 4, repeat: Infinity, ease: 'linear' } : { duration: 0.3 }}
+                            className="absolute inset-1 rounded-full border border-white/20 flex items-center justify-center"
+                          >
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#111' }} />
+                          </motion.div>
+                        </div>
+
+                        {/* Info pista + progreso */}
+                        <div className="hidden md:flex flex-col w-28 min-w-0">
+                          <span className="text-[11px] font-black text-white truncate leading-tight">
+                            {playlist[currentTrack]?.title}
+                          </span>
+                          <span className="text-[9px] truncate" style={{ color: themeColor }}>
+                            {playlist[currentTrack]?.artist}
+                          </span>
+                          <div className="mt-1 h-[3px] rounded-full overflow-hidden" style={{ backgroundColor: '#333' }}>
+                            <div className="h-full rounded-full transition-[width] duration-300" style={{ width: `${Math.round(trackProgress * 100)}%`, backgroundColor: themeColor }} />
+                          </div>
+                        </div>
+
+                        {/* Controles */}
+                        <button onClick={(e) => { e.stopPropagation(); changeTrack(-1); }} className="text-slate-400 hover:text-white transition-colors p-1" title="Anterior">
+                          <SkipBack className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); toggleMusic(); }}
+                          className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-105 shrink-0"
+                          style={{ backgroundColor: themeColor, color: '#111' }}
+                          title={isPlaying ? 'Pausar' : 'Reproducir'}
+                        >
+                          {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 ml-0.5" />}
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); changeTrack(1); }} className="text-slate-400 hover:text-white transition-colors p-1" title="Siguiente">
+                          <SkipForward className="w-4 h-4" />
+                        </button>
+                        <ChevronRight className="w-4 h-4 text-slate-500 transition-transform duration-300" style={{ transform: playerOpen ? 'rotate(-90deg)' : 'rotate(90deg)' }} />
+                      </div>
+
+                      {/* Panel desplegable con la lista de canciones */}
+                      <AnimatePresence>
+                        {playerOpen && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                            transition={{ duration: 0.18 }}
+                            className="absolute top-full right-0 mt-2 w-72 rounded-2xl border shadow-2xl z-[300] overflow-hidden"
+                            style={{ backgroundColor: isDarkMode ? '#111' : '#1A1A1A', borderColor: `${themeColor}55` }}
+                          >
+                            <div className="px-4 py-3 border-b" style={{ borderColor: '#2a2a2a' }}>
+                              <p className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: themeColor }}>Lista de reproducción</p>
+                              <p className="text-[9px] text-slate-500 mt-0.5">Doble clic en el reproductor para iniciar</p>
+                            </div>
+                            <div className="max-h-72 overflow-y-auto custom-scrollbar py-1">
+                              {MUSIC_PLAYLIST.map((t, i) => {
+                                const active = playlist[currentTrack]?.file === t.file;
+                                return (
+                                  <button
+                                    key={t.file}
+                                    onClick={() => playFrom(MUSIC_PLAYLIST, i)}
+                                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-white/5"
+                                  >
+                                    <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: active ? themeColor : '#2a2a2a', color: active ? '#111' : '#888' }}>
+                                      {active && isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 ml-0.5" />}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                      <p className="text-[12px] font-bold truncate" style={{ color: active ? themeColor : '#fff' }}>{t.title}</p>
+                                      <p className="text-[10px] text-slate-500 truncate">{t.artist}</p>
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
                     <button
                       onClick={() => setIsEditingTalent('new')}
-                      className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm transition-all hover:scale-105 text-slate-500 hover:text-[#7000FF]"
+                      className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 backdrop-blur-md shadow-sm transition-all hover:scale-105"
                       style={{ color: themeColor }}
                       title="Agregar Talento"
                     >
                       <Plus className="w-5 h-5" />
                     </button>
                     <div className="relative group/color">
-                      <button 
-                        className="p-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm transition-all hover:scale-105"
+                      <button
+                        className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 backdrop-blur-md shadow-sm transition-all hover:scale-105"
                         title="Color de Tema"
                       >
                         <div 
@@ -1042,7 +1293,7 @@ export default function App() {
                       <div className="absolute top-full right-0 mt-2 p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-2xl z-[300] hidden group-hover/color:block w-48 animate-in fade-in slide-in-from-top-2 duration-200">
                         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Acento Primario</p>
                         <div className="grid grid-cols-4 gap-2">
-                          {['#7000FF', '#FF3366', '#00BBF9', '#00F5D4', '#FEE440', '#FF9E00', '#9EF01A', '#F15BB5'].map(color => (
+                          {['#C9A227', '#B8860B', '#D4AF37', '#A67C00', '#8C6E1F', '#1A1A1A', '#7000FF', '#0EA5E9'].map(color => (
                             <button
                               key={color}
                               onClick={() => setThemeColor(color)}
@@ -1064,24 +1315,14 @@ export default function App() {
                     <button 
                       onClick={() => setNotificationsEnabled(!notificationsEnabled)}
                       title={notificationsEnabled ? "Desactivar recordatorios" : "Activar recordatorios"}
-                      className={`p-2.5 rounded-xl transition-all ${
-                        notificationsEnabled 
-                          ? '' 
-                          : isDarkMode ? 'bg-slate-800 text-slate-500' : 'bg-slate-100 text-slate-400'
-                      }`}
-                      style={notificationsEnabled ? { backgroundColor: `${themeColor}1a`, color: themeColor } : {}}
+                      className="p-2.5 rounded-xl transition-all border border-white/10 backdrop-blur-md hover:scale-105 bg-white/5 text-slate-400"
+                      style={notificationsEnabled ? { backgroundColor: `${themeColor}1a`, color: themeColor, borderColor: `${themeColor}55` } : {}}
                     >
                       {notificationsEnabled ? <Bell className="w-5 h-5" /> : <BellOff className="w-5 h-5" />}
                     </button>
-                    <button 
-                      onClick={() => setIsDarkMode(!isDarkMode)}
-                      className={`p-2.5 rounded-xl ${isDarkMode ? 'bg-slate-800 text-yellow-400 hover:bg-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'} transition-all`}
-                    >
-                      {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-                    </button>
-                    <button 
+                    <button
                       onClick={(e) => { e.stopPropagation(); setIsSettingsOpen(true); }}
-                      className={`p-2.5 ${isDarkMode ? 'bg-slate-800 text-white border-slate-700 hover:bg-slate-700' : 'bg-white text-[#1A1A1A] border-slate-100 hover:bg-slate-50'} rounded-xl transition-all border group`}
+                      className="p-2.5 rounded-xl transition-all border border-white/10 backdrop-blur-md bg-white/5 text-white hover:bg-white/10 hover:scale-105 group"
                       style={{ borderColor: isSettingsOpen ? themeColor : undefined }}
                     >
                       <Settings className="w-5 h-5 transition-transform duration-500" style={{ color: isSettingsOpen ? themeColor : undefined }} />
@@ -1117,8 +1358,8 @@ export default function App() {
                       <select
                         value={selectedArea}
                         onChange={(e) => setSelectedArea(e.target.value)}
-                        className={`${isDarkMode ? 'bg-slate-800 text-white border-slate-700 hover:bg-slate-700' : 'bg-white text-[#1A1A1A] border-slate-100 hover:bg-slate-50'} border-2 rounded-xl py-2 pl-9 pr-8 text-[11px] focus:outline-none appearance-none transition-all cursor-pointer font-black min-w-[140px] w-full`}
-                        style={{ borderColor: selectedArea !== 'Todas' ? `${themeColor}33` : 'transparent' }}
+                        className="bg-white/5 backdrop-blur-md text-white border border-white/10 hover:bg-white/10 rounded-xl py-2 pl-9 pr-8 text-[11px] focus:outline-none appearance-none transition-all cursor-pointer font-black min-w-[140px] w-full"
+                        style={{ borderColor: selectedArea !== 'Todas' ? `${themeColor}55` : undefined }}
                       >
                         {areas.map(area => (
                           <option key={area} value={area}>{area}</option>
@@ -1128,7 +1369,7 @@ export default function App() {
                         <ChevronRight className={`w-3 h-3 ${isDarkMode ? 'text-slate-500' : 'text-[#A7A9AC]'} rotate-90`} />
                       </div>
                     </div>
-                    <div className="flex gap-1 p-1 bg-white dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm">
+                    <div className="flex gap-1 p-1 bg-white/5 backdrop-blur-md rounded-xl border border-white/10 shadow-sm">
                       <button 
                         onClick={() => setViewMode('grid')}
                         className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-slate-100 dark:bg-slate-700 text-[#7000FF]' : 'text-slate-400 hover:text-slate-600'}`}
@@ -1157,20 +1398,16 @@ export default function App() {
                   whileHover={{ y: -4 }}
                   className="lg:col-span-2 text-white rounded-[40px] shadow-2xl relative overflow-hidden group cursor-default h-full min-h-[420px]"
                   style={{
-                    background: '#1a0a3a',
-                    boxShadow: `0 20px 40px -12px ${themeColor}4d`
+                    background: '#06070d',
+                    boxShadow: `0 24px 60px -22px rgba(0,0,0,0.8), 0 0 0 1px ${themeColor}1f`
                   }}
                 >
-                  {/* Base background image — always visible */}
-                  <img
-                    src="https://i.postimg.cc/Hkr7ppBd/Chat-GPT-Image-Jun-9-2026-11-00-59-AM.png"
-                    alt=""
-                    aria-hidden="true"
-                    className="absolute inset-0 w-full h-full object-cover"
-                    style={{ objectPosition: 'center top' }}
-                    referrerPolicy="no-referrer"
+                  {/* Fondo espacial con leve calidez dorada (base siempre presente) */}
+                  <div
+                    className="absolute inset-0"
+                    style={{ background: 'radial-gradient(120% 90% at 50% 0%, #221a08 0%, #11100f 42%, #06070d 100%)' }}
                   />
-                  {/* Employee photo overlay for single birthday with photo */}
+                  {/* Foto del cumpleañero (un solo festejado con foto) */}
                   {todayBirthdays.length === 1 && todayBirthdays[0].foto && (
                     <img
                       src={todayBirthdays[0].foto}
@@ -1179,24 +1416,88 @@ export default function App() {
                       className="absolute inset-0 w-full h-full object-cover"
                       style={{ objectPosition: 'center top' }}
                       referrerPolicy="no-referrer"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                     />
                   )}
+
+                  {/* Destellos dorados decorativos */}
+                  <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                    {[...Array(10)].map((_, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: [0, 0.7, 0], y: [0, -16, 0] }}
+                        transition={{ duration: 3 + (i % 4), repeat: Infinity, delay: i * 0.5, ease: 'easeInOut' }}
+                        className="absolute rounded-full"
+                        style={{
+                          left: `${(i * 37) % 95}%`,
+                          top: `${(i * 53) % 80}%`,
+                          width: i % 3 === 0 ? 6 : 3,
+                          height: i % 3 === 0 ? 6 : 3,
+                          background: i % 2 === 0 ? '#F0D060' : themeColor,
+                        }}
+                      />
+                    ))}
+                  </div>
 
                   {/* Gradient overlay for legibility */}
                   <div
                     className="absolute inset-0 z-[1]"
-                    style={{ background: 'linear-gradient(to top, rgba(30,10,60,0.92) 0%, rgba(30,10,60,0.45) 40%, rgba(0,0,0,0) 70%)' }}
+                    style={{ background: 'linear-gradient(to top, rgba(13,13,13,0.94) 0%, rgba(13,13,13,0.5) 40%, rgba(0,0,0,0.1) 75%)' }}
                   />
 
 
                   {/* Content */}
                   <div className="relative z-[2] flex flex-col h-full min-h-[420px]">
                     {todayBirthdays.length === 0 ? (
-                      <div className="flex-1 flex items-center justify-center p-8">
-                        <div className="w-full py-12 text-center bg-white/5 rounded-[32px] border border-white/10 backdrop-blur-sm">
-                          <p className="text-sm opacity-60 italic font-bold mb-2">¡Día tranquilo!</p>
-                          <p className="text-xs opacity-40">No hay cumpleaños programados para hoy ni mañana.</p>
-                        </div>
+                      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
+                        {/* Emblema dorado animado */}
+                        <motion.div
+                          animate={{ y: [0, -10, 0] }}
+                          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+                          className="relative mb-6"
+                        >
+                          <div
+                            className="w-24 h-24 rounded-full flex items-center justify-center"
+                            style={{ background: `radial-gradient(circle at 35% 30%, ${themeColor}, #2a2000)`, boxShadow: `0 0 28px ${themeColor}33` }}
+                          >
+                            <Cake className="w-11 h-11" style={{ color: '#FFF3D0' }} />
+                          </div>
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 18, repeat: Infinity, ease: 'linear' }}
+                            className="absolute -inset-2 rounded-full border border-dashed"
+                            style={{ borderColor: `${themeColor}55` }}
+                          />
+                        </motion.div>
+
+                        <p className="font-black text-white mb-1" style={{ fontSize: 22, letterSpacing: -0.5 }}>
+                          Hoy nadie sopla velas
+                        </p>
+                        <p className="text-xs mb-6" style={{ color: 'rgba(255,255,255,0.45)', maxWidth: 280 }}>
+                          El equipo está completo y trabajando. Disfruta la calma… la próxima celebración ya viene en camino.
+                        </p>
+
+                        {/* Próximo cumpleaños destacado */}
+                        {upcomingBirthdays.length > 0 && (() => {
+                          const next = upcomingBirthdays[0];
+                          const days = Math.ceil((new Date(today.getFullYear(), next.mesNum - 1, next.dia).getTime() - today.getTime()) / (1000 * 3600 * 24));
+                          return (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setSelectedEmployee(next); }}
+                              className="flex items-center gap-3 pl-2 pr-5 py-2 rounded-full transition-all hover:scale-105"
+                              style={{ background: 'rgba(255,255,255,0.06)', border: `1px solid ${themeColor}44` }}
+                            >
+                              <div className="w-9 h-9 rounded-full overflow-hidden flex items-center justify-center font-black text-sm shrink-0 border-2" style={{ backgroundColor: themeColor, color: '#111', borderColor: '#ffffff22' }}>
+                                {next.foto ? <img src={next.foto} alt="" className="w-full h-full object-cover object-top" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} /> : next.nombre.charAt(0)}
+                              </div>
+                              <div className="text-left">
+                                <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: themeColor }}>Próximo · {days === 1 ? 'mañana' : `en ${days} días`}</p>
+                                <p className="text-sm font-black text-white leading-tight">{formatDisplayName(next.nombre)} · {next.dia} {next.mes.slice(0, 3)}</p>
+                              </div>
+                            </button>
+                          );
+                        })()}
                       </div>
                     ) : (
                       <>
@@ -1233,7 +1534,7 @@ export default function App() {
                                   onClick={(e) => { e.stopPropagation(); setSelectedEmployee(emp); }}
                                 >
                                   <p title={emp.nombre} className="font-black text-white leading-tight" style={{ fontSize: 22 }}>{emp.nombre.split(' ')[0]}</p>
-                                  <p className="font-black uppercase tracking-wider" style={{ fontSize: 11, color: '#c4b5fd' }}>{emp.area}</p>
+                                  <p className="font-black uppercase tracking-wider" style={{ fontSize: 11, color: '#F0D060' }}>{emp.area}</p>
                                 </div>
                               );
                             })()
@@ -1246,7 +1547,7 @@ export default function App() {
                                     onClick={(e) => { e.stopPropagation(); setSelectedEmployee(emp); }}
                                   >
                                     <p title={emp.nombre} className="font-black text-white leading-tight" style={{ fontSize: 18 }}>{emp.nombre.split(' ')[0]}</p>
-                                    <p className="font-black uppercase tracking-wider" style={{ fontSize: 11, color: '#c4b5fd' }}>{emp.area}</p>
+                                    <p className="font-black uppercase tracking-wider" style={{ fontSize: 11, color: '#F0D060' }}>{emp.area}</p>
                                   </div>
                                   {idx < todayBirthdays.length - 1 && (
                                     <div style={{ height: 1, background: 'rgba(255,255,255,0.25)' }} />
@@ -1262,7 +1563,7 @@ export default function App() {
                 </motion.div>
 
                 {/* Upcoming Birthdays Dashboard */}
-                <div className={`lg:col-span-2 p-8 rounded-[40px] border ${isDarkMode ? 'bg-[#1E293B] border-slate-800' : 'bg-white border-slate-100'} shadow-xl transition-colors duration-500`}>
+                <div className="lg:col-span-2 p-8 rounded-[40px] border border-white/10 bg-white/[0.045] backdrop-blur-2xl shadow-2xl shadow-black/40">
                   <div className="flex justify-between items-center mb-8">
                     <h4 className={`text-[10px] ${isDarkMode ? 'text-slate-500' : 'text-[#A7A9AC]'} uppercase tracking-[0.3em] font-black transition-colors`}>PRÓXIMOS CUMPLEAÑOS</h4>
                     <Sparkles className="w-5 h-5 text-yellow-400 opacity-50" />
@@ -1340,8 +1641,8 @@ export default function App() {
                       repeatType: "reverse"
                     } : undefined
                   }}
-                  className={`${isDarkMode ? 'bg-[#1E293B] border-slate-800 shadow-[0_20px_50px_rgba(0,0,0,0.3)]' : 'bg-white border-transparent shadow-[0_8px_30px_rgb(0,0,0,0.04)]'} border-[3px] rounded-[40px] p-8 flex flex-col hover:shadow-[0_20px_50px_rgba(0,0,0,0.08)] transition-all relative group overflow-hidden`}
-                  style={{ borderColor: isCurrentMonth ? themeColor : 'transparent' }}
+                  className="bg-white/[0.04] backdrop-blur-2xl border-[2px] border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.4)] rounded-[40px] p-8 flex flex-col hover:bg-white/[0.06] transition-all relative group overflow-hidden"
+                  style={{ borderColor: isCurrentMonth ? themeColor : undefined }}
                 >
                   {isCurrentMonth && (
                     <div className="absolute top-0 right-0 text-white px-4 py-1.5 rounded-bl-2xl text-[9px] font-black tracking-widest uppercase" style={{ backgroundColor: themeColor }}>
@@ -1427,7 +1728,7 @@ export default function App() {
             })}
           </div>
         ) : (
-          <div className="flex-1 bg-white dark:bg-[#1E293B] rounded-[40px] shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden flex flex-col">
+          <div className="flex-1 bg-white/[0.045] backdrop-blur-2xl rounded-[40px] shadow-2xl shadow-black/40 border border-white/10 overflow-hidden flex flex-col">
             <div className="p-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
               <h3 className="text-xl font-black">Lista Maestra de Cumpleaños</h3>
               <div className="flex gap-2">
@@ -1544,11 +1845,11 @@ export default function App() {
         {/* Legend Footer */}
         <footer className={`flex items-center gap-10 text-[10px] ${isDarkMode ? 'text-slate-500' : 'text-[#A7A9AC]'} font-black uppercase tracking-[0.2em] pt-8 border-t ${isDarkMode ? 'border-slate-800' : 'border-slate-100'} transition-colors`}>
           <div className="flex items-center gap-3">
-            <div className="w-4 h-4 rounded-full border-2 border-[#7000FF]" />
+            <div className="w-4 h-4 rounded-full border-2" style={{ borderColor: themeColor }} />
             <span>Mes Actual</span>
           </div>
           <div className="flex items-center gap-3">
-            <div className="w-4 h-4 rounded-full bg-gradient-to-tr from-[#FF3366] to-[#7000FF] shadow-lg shadow-purple-500/20" />
+            <div className="w-4 h-4 rounded-full bg-gradient-to-tr from-[#F0D060] to-[#B8860B] shadow-lg" />
             <span>Celebración</span>
           </div>
           <div className={`ml-auto ${isDarkMode ? 'text-slate-400' : 'text-[#1A1A1A]'} opacity-40 transition-colors`}>
@@ -1560,12 +1861,17 @@ export default function App() {
 
       <AnimatePresence>
         {selectedEmployee && (
-          <Modal 
-            employee={selectedEmployee} 
-            onClose={() => setSelectedEmployee(null)} 
+          <Modal
+            employee={selectedEmployee}
+            onClose={() => setSelectedEmployee(null)}
             onEdit={(emp) => setIsEditingTalent(emp)}
             monthColors={monthColors}
             isDarkMode={isDarkMode}
+            isMixPlaying={isPlaying && playlist === JESUS_SONGS}
+            onPlayMix={() => {
+              if (isPlaying && playlist === JESUS_SONGS) pauseMusic();
+              else playFrom(JESUS_SONGS, 0);
+            }}
           />
         )}
         {isSettingsOpen && (
@@ -1597,7 +1903,7 @@ export default function App() {
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-5 mb-10">
                 {MONTHS_ES.map(month => (
-                  <div key={month} className={`flex items-center gap-4 p-4 ${isDarkMode ? 'bg-slate-800 border-slate-700 hover:border-[#7000FF]/40' : 'bg-[#F8FAFC] border-slate-100 hover:border-[#7000FF]/20'} rounded-[24px] border transition-all group`}>
+                  <div key={month} className={`flex items-center gap-4 p-4 ${isDarkMode ? 'bg-slate-800 border-slate-700 hover:border-[#C9A227]/40' : 'bg-[#F8FAFC] border-slate-100 hover:border-[#C9A227]/30'} rounded-[24px] border transition-all group`}>
                     <div className="relative w-10 h-10 rounded-xl overflow-hidden shadow-sm">
                       <input 
                         type="color" 
@@ -1620,7 +1926,7 @@ export default function App() {
                 </button>
                 <button 
                   onClick={() => setIsSettingsOpen(false)}
-                  className={`${isDarkMode ? 'bg-white text-[#1A1A1A] hover:bg-slate-200' : 'bg-[#1A1A1A] text-white hover:bg-[#7000FF]'} px-10 py-4 rounded-[24px] font-black text-xs uppercase tracking-[0.2em] transition-all shadow-xl shadow-slate-200 hover:shadow-purple-500/20`}
+                  className={`${isDarkMode ? 'bg-white text-[#1A1A1A] hover:bg-slate-200' : 'bg-[#1A1A1A] text-white hover:bg-[#C9A227]'} px-10 py-4 rounded-[24px] font-black text-xs uppercase tracking-[0.2em] transition-all shadow-xl shadow-slate-200`}
                 >
                   Confirmar
                 </button>
@@ -1644,6 +1950,8 @@ export default function App() {
     </AnimatePresence>
 
       <style>{`
+        @keyframes twk { 0%, 100% { opacity: 0.18; } 50% { opacity: 0.95; } }
+        .twinkle { animation: twk 4s ease-in-out infinite; }
         .custom-scrollbar::-webkit-scrollbar {
           width: 4px;
         }
@@ -1655,7 +1963,7 @@ export default function App() {
           border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #7000FF;
+          background: #C9A227;
         }
       `}</style>
     </>
