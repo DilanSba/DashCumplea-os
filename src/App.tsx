@@ -279,7 +279,7 @@ const PHOTO_FILES: Record<string, string> = {
   'diana carolina velasquez rincon': 'diana-carolina-velasquez.png',
   'bryan smith jimenez pena': 'BRYAN JIMENEZ.png',
   'bayron andres diaz figueroa': 'Bayron Andres Diaz Figueroa.png',
-  'karol andrea martinez catellanos': 'Karol Andrea Martinez Castellanos.png',
+  'karol andrea martinez catellanos': 'Karol.png',
   'reinel esteban molina': 'Reinel Esteban Molina Leal.png',
   'salma valentina burbano barahona': 'Salma Valentina Burbano Barahona.png',
   'yurubi angelica bonilla castellar': 'Yurubi Angelica Bonilla Castellar.png',
