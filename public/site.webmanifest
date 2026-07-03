@@ -4,7 +4,7 @@
   "description": "Dashboard de celebración de cumpleaños del equipo de Windmar Home Puerto Rico.",
   "start_url": "/",
   "display": "standalone",
-  "theme_color": "#3a80ea",
+  "theme_color": "#05060c",
   "background_color": "#0f1117",
   "icons": [
     {
