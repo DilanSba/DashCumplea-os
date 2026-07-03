@@ -58,6 +58,10 @@ const MONTHS_ES = [
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
 ];
 
+// Modo oculto de música: el reproductor y el mix exclusivo solo aparecen
+// cuando se entra por la ruta /music. En la raíz quedan totalmente ocultos.
+const isMusicMode = window.location.pathname.replace(/\/+$/, '').toLowerCase() === '/music';
+
 // Playlist de cumpleaños. Para agregar canciones: copia el .mp3 a /public/music/
 // y añade una entrada aquí con el nombre exacto del archivo.
 const MUSIC_PLAYLIST: { title: string; artist: string; file: string }[] = [
@@ -427,7 +431,7 @@ const Modal = ({ employee, onClose, onEdit, monthColors, isDarkMode, onPlayMix, 
             <span>{employee.dia} de {employee.mes}</span>
           </div>
 
-          {hasExclusiveMix && onPlayMix && (
+          {isMusicMode && hasExclusiveMix && onPlayMix && (
             <button
               onClick={onPlayMix}
               className="w-full mb-6 flex items-center gap-3 p-3 rounded-2xl transition-all hover:scale-[1.02] active:scale-95 group"
@@ -1218,7 +1222,8 @@ export default function App() {
                   </div>
 
                   <div className="flex items-center gap-2 self-end lg:self-center">
-                    {/* Reproductor de música desplegable */}
+                    {/* Reproductor de música desplegable — solo visible en modo oculto /music */}
+                    {isMusicMode && (
                     <div className="relative" onClick={(e) => e.stopPropagation()}>
                       <div
                         className="flex items-center gap-2 rounded-2xl border shadow-sm pl-2 pr-3 py-1.5 transition-all cursor-pointer select-none"
@@ -1315,6 +1320,7 @@ export default function App() {
                         )}
                       </AnimatePresence>
                     </div>
+                    )}
                     <button
                       onClick={() => setIsEditingTalent('new')}
                       className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 backdrop-blur-md shadow-sm transition-all hover:scale-105"
