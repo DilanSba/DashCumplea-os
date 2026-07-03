@@ -871,7 +871,7 @@ export default function App() {
         if (!localStorage.getItem(lastNotifiedKey)) {
           new Notification("¡Cumpleaños Mañana! 🎂", {
             body: `${emp.nombre} de ${emp.area} cumple años mañana. ¡No olvides felicitarle!`,
-            icon: "https://i.postimg.cc/LsTjqnt3/LOGOS-WMH-PUERTORICO-FLORIDA-white.png"
+            icon: "/wmh-logo-white.png"
           });
           localStorage.setItem(lastNotifiedKey, 'true');
         }
@@ -1098,7 +1098,7 @@ export default function App() {
               className="mb-10"
             >
               <img
-                src="https://i.postimg.cc/LsTjqnt3/LOGOS-WMH-PUERTORICO-FLORIDA-white.png"
+                src="/wmh-logo-white.png"
                 alt="Windmar Home Logo"
                 className="w-56 h-auto object-contain drop-shadow-[0_0_24px_rgba(201,162,39,0.35)]"
                 referrerPolicy="no-referrer"
@@ -1194,7 +1194,7 @@ export default function App() {
                   <div className="flex items-center gap-4 group cursor-pointer shrink-0">
                     <div className="w-12 h-12 rounded-xl flex items-center justify-center transform group-hover:rotate-6 transition-transform overflow-hidden p-1">
                       <img 
-                        src="https://i.postimg.cc/LsTjqnt3/LOGOS-WMH-PUERTORICO-FLORIDA-white.png" 
+                        src="/wmh-logo-white.png" 
                         alt="Windmar Home Logo" 
                         className="w-full h-full object-contain"
                         referrerPolicy="no-referrer"
